@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Eldemy</string>
+    <string name="title_activity_main">Eldemy</string>
+    <string name="package_name">com.eldemy.student</string>
+    <string name="custom_url_scheme">com.eldemy.student</string>
+    <string name="server_client_id">928122069790-jh6uvrfqqn6hq6mlj40isk3j5os0e993.apps.googleusercontent.com</string>
+</resources>

@@ -1,0 +1,161 @@
+<ion-content class="dashboard-content">
+  <app-header></app-header>
+
+  <div class="hero-title">
+    <h1>Kuasai keahlian<br/><span class="color-primary">baru Anda.</span></h1>
+  </div>
+
+  <div class="search-bar-container">
+    <div class="search-input-wrapper">
+      <ion-icon name="search-outline" class="search-icon"></ion-icon>
+      <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="applySearch()" placeholder="Cari kursus, mentor..." />
+      <span class="search-action-text" *ngIf="searchQuery" (click)="applySearch()">Cari</span>
+    </div>
+    <button type="button" class="filter-btn" (click)="openFilterModal()">
+      <ion-icon name="options-outline"></ion-icon>
+    </button>
+  </div>
+
+  <div class="search-methods" *ngIf="appliedSearchQuery">
+    <span class="method-label">Mencari di:</span>
+    <span class="method-pill" [class.active]="searchMode === 'all'" (click)="searchMode = 'all'; applySearch()">Semua</span>
+    <span class="method-pill" [class.active]="searchMode === 'course'" (click)="searchMode = 'course'; applySearch()">Kursus</span>
+    <span class="method-pill" [class.active]="searchMode === 'instructor'" (click)="searchMode = 'instructor'; applySearch()">Instruktur</span>
+  </div>
+
+  <div class="skill-level-selector">
+    <div class="skill-tab" 
+         *ngFor="let level of skillLevels" 
+         [class.active]="activeSkillLevel === level"
+         (click)="setActiveSkillLevel(level)">
+      {{ level }}
+    </div>
+  </div>
+
+  <div class="category-pills" *ngIf="categories.length > 1 && (activeSkillLevel === 'Semua' || activeSkillLevel === 'UMUM')">
+    <div class="pill" 
+         *ngFor="let cat of categories" 
+         [class.active]="activeCategory === cat"
+         (click)="setActiveCategory(cat)">
+      {{ cat }}
+    </div>
+  </div>
+
+  <ng-container *ngIf="filteredList.length > 0">
+    <div class="bestseller-card" *ngIf="bestSellerCourse" (click)="goToDetail(bestSellerCourse.id)">
+      <div class="badge-accent bg-orange">TERLARIS</div>
+      <h2>{{ bestSellerCourse.title }}</h2>
+      <p>{{ bestSellerCourse.description }}</p>
+      <div class="card-footer">
+        <div class="rating"><ion-icon name="people"></ion-icon> {{ bestSellerCourse.purchases_count || 0 }} Siswa</div>
+        <div class="price">Rp {{ bestSellerCourse.base_price | number }}</div>
+      </div>
+    </div>
+
+    <div class="quick-cards-wrapper" *ngIf="filteredList.length > 1">
+      <div class="quick-card card-mint" *ngIf="rilisBaru" (click)="goToDetail(rilisBaru.id)">
+        <span class="label text-mint">RILIS BARU</span>
+        <h3>{{ rilisBaru.title }}</h3>
+        <div class="instructor" *ngIf="rilisBaru.instructor">
+          <div class="avatar-small me"><img [src]="rilisBaru.instructor.avatar_url || 'https://ui-avatars.com/api/?name=' + rilisBaru.instructor.name + '&background=random'" /></div>
+          <span class="name-text">{{ rilisBaru.instructor.name }}</span>
+        </div>
+      </div>
+
+      <div class="quick-card card-pink" *ngIf="sedangTren" (click)="goToDetail(sedangTren.id)">
+        <span class="label text-pink">SEDANG TREN</span>
+        <h3>{{ sedangTren.title }}</h3>
+        <div class="instructor" *ngIf="sedangTren.instructor">
+          <div class="avatar-small"><img [src]="sedangTren.instructor.avatar_url || 'https://ui-avatars.com/api/?name=' + sedangTren.instructor.name + '&background=random'" /></div>
+          <span class="name-text">{{ sedangTren.instructor.name }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="titles">
+        <h2>Rekomendasi Untuk Anda</h2>
+        <p>Kursus pilihan berdasarkan gaya belajar Anda.</p>
+      </div>
+      <div class="view-all" (click)="loadMoreRekomendasi()" *ngIf="filteredList.length > rekomendasiList.length">
+        Lihat Lebih<br/>Banyak <ion-icon name="chevron-forward-outline"></ion-icon>
+      </div>
+    </div>
+
+    <div class="course-list">
+      <div class="course-item" *ngFor="let course of rekomendasiList" (click)="goToDetail(course.id)">
+        <div class="course-image-placeholder" [style.background]="course.thumbnail ? 'url(' + course.thumbnail + ') center/cover no-repeat' : '#3b5f54'">
+        </div>
+        <div class="course-meta">
+          <div style="display: flex; gap: 6px;">
+            <span class="tag" style="background: rgba(0,0,0,0.05); color: #555;">{{ course.skill_level || 'UMUM' }}</span>
+            <span class="tag tag-mint" *ngIf="(course.skill_level === 'UMUM' || !course.skill_level) && course.category">{{ course.category }}</span>
+          </div>
+          <span class="rating-text"><ion-icon name="people" color="medium"></ion-icon> {{ course.purchases_count || 0 }} Siswa</span>
+        </div>
+        <h3 class="course-title">{{ course.title }}</h3>
+        <p class="course-desc">{{ course.description }}</p>
+        <div class="course-footer">
+          <div class="instructor-info" *ngIf="course.instructor">
+            <div class="avatar-small"><img [src]="course.instructor.avatar_url || 'https://ui-avatars.com/api/?name=' + course.instructor.name + '&background=random'"/></div>
+            <div class="ins-text">
+              <span class="ins-name">{{ course.instructor.name }}</span>
+              <span class="ins-title">INSTRUKTUR</span>
+            </div>
+          </div>
+          <div class="price-info">
+            <span class="price">Rp {{ course.base_price | number }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <div *ngIf="filteredList.length === 0" style="padding: 24px; text-align: center; color: #888;">
+    Tidak ada kursus tersedia di hasil filter ini.
+  </div>
+
+  <div style="height: 100px;"></div> 
+</ion-content>
+
+<!-- Custom Filter Bottom Sheet (replaces broken ion-modal in WebView) -->
+<div class="custom-modal-backdrop" *ngIf="isFilterModalOpen" (click)="closeFilterModal()"></div>
+<div class="custom-bottom-sheet" *ngIf="isFilterModalOpen">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>Filter Kursus</h3>
+    <button class="sheet-close" (click)="closeFilterModal()">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="filter-section" *ngIf="activeSkillLevel === 'Semua' || activeSkillLevel === 'UMUM'">
+      <h3 style="margin: 0 0 12px; font-size: 0.95rem; font-weight: 600; color: #333;">Kategori Kursus</h3>
+      <div class="checklist-grid">
+        <div class="check-item checkbox-pill" *ngFor="let cat of categories.slice(1)" 
+             [class.selected]="selectedCategories.includes(cat)"
+             (click)="toggleCategory(cat)">
+             {{ cat }}
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-section" style="margin-top: 24px;">
+      <h3 style="margin: 0 0 12px; font-size: 0.95rem; font-weight: 600; color: #333;">Kisaran Harga</h3>
+      <div class="price-radio-list">
+        <label class="radio-option" *ngFor="let opt of [
+          {value: 'all', label: 'Semua Harga'},
+          {value: 'under_20k', label: 'Kurang dari Rp 20.000'},
+          {value: '20k_50k', label: 'Rp 20.000 - Rp 50.000'},
+          {value: 'over_50k', label: 'Lebih dari Rp 50.000'}
+        ]">
+          <input type="radio" name="priceRange" [value]="opt.value" [(ngModel)]="selectedPriceRange" />
+          <span>{{ opt.label }}</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn-reset" (click)="resetFilter()" style="flex:1;padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff;color:#666;font-weight:600;font-size:0.9rem;">Reset</button>
+    <button class="btn-apply" (click)="applyAdvancedFilter()" style="flex:2;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#c92f6b,#a02358);color:#fff;font-weight:600;font-size:0.9rem;">Terapkan Filter</button>
+  </div>
+</div>
+

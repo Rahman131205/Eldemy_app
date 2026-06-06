@@ -1,0 +1,152 @@
+<ion-content class="courses-page">
+  <app-header></app-header>
+
+  <div class="page-body">
+    <div class="greeting-card">
+      <div class="greeting-left">
+        <h2>Terus Semangat,<br/>{{ displayName }}!</h2>
+        <p>{{ motivationText }}</p>
+      </div>
+      <div class="greeting-stats" *ngIf="myCourses.length > 0">
+        <div class="stat-ring">
+          <svg width="56" height="56" viewBox="0 0 56 56">
+            <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="5"/>
+            <circle cx="28" cy="28" r="23" fill="none" stroke="#fff" stroke-width="5"
+                    stroke-linecap="round"
+                    [style.stroke-dasharray]="'144.5'"
+                    [style.stroke-dashoffset]="144.5 - (144.5 * overallProgress / 100)"
+                    transform="rotate(-90 28 28)"/>
+          </svg>
+          <span class="stat-ring-text">{{ overallProgress }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-strip" *ngIf="myCourses.length > 0">
+      <div class="stat-item">
+        <span class="stat-value">{{ myCourses.length }}</span>
+        <span class="stat-label">Kursus</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value">{{ totalMaterialsCompleted }}</span>
+        <span class="stat-label">Materi Selesai</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value">{{ completedCoursesCount }}</span>
+        <span class="stat-label">Lulus</span>
+      </div>
+    </div>
+
+    <div class="skill-level-selector" *ngIf="myCourses.length > 0">
+      <div class="skill-tab" 
+           *ngFor="let level of skillLevels" 
+           [class.active]="activeSkillLevel === level"
+           (click)="setActiveSkillLevel(level)">
+        {{ level }}
+      </div>
+    </div>
+
+    <div class="category-pills" *ngIf="categories.length > 1 && (activeSkillLevel === 'Semua' || activeSkillLevel === 'UMUM')">
+      <div 
+        class="pill" 
+        *ngFor="let cat of categories; let i = index"
+        [class.active]="cat === activeCategory"
+        (click)="setActiveCategory(cat)"
+      >
+        {{ cat }}
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="loading-spinner">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+      <p>Memuat kursus...</p>
+    </div>
+
+    <div *ngIf="!isLoading && filteredCourses.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <ion-icon name="book-outline"></ion-icon>
+      </div>
+      <h3>Belum Ada Kursus</h3>
+      <p>Anda belum mengikuti kursus apapun. Yuk, temukan kelas menarik di Beranda!</p>
+    </div>
+
+    <div class="course-list" *ngIf="!isLoading && filteredCourses.length > 0">
+      <div class="course-card" *ngFor="let item of filteredCourses" (click)="goToCourseDetail(item.course.id)">
+        <div class="card-image">
+          <img [src]="item.course.thumbnail || 'https://placehold.co/400x300?text=Course'" alt="{{ item.course.title }}" />
+          <div class="image-overlay">
+            <span class="progress-badge" [ngClass]="{'complete': item.progress === 100}">
+              {{ item.progress || 0 }}%
+            </span>
+          </div>
+        </div>
+        <div class="card-content">
+          <div class="card-meta">
+            <span class="category-badge">{{ item.course.category || 'GENERAL' }}</span>
+            <span class="material-count">
+              <ion-icon name="book-outline"></ion-icon>
+              {{ item.course.materials?.length || 0 }} Materi
+            </span>
+          </div>
+          <h3 class="course-title">{{ item.course.title }}</h3>
+          
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" [style.width]="(item.progress || 0) + '%'" [ngClass]="{'complete': item.progress === 100}"></div>
+          </div>
+
+          <button class="continue-btn" (click)="$event.stopPropagation(); goToCourseDetail(item.course.id)">
+            <span>{{ item.progress === 100 ? 'Lihat Kursus' : 'Lanjutkan Belajar' }}</span>
+            <ion-icon name="caret-forward-outline"></ion-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="widget-section" *ngIf="!isLoading && recentActivities.length > 0">
+      <h3 class="section-title">Aktivitas Terkini</h3>
+      
+      <div class="activity-list">
+        <div class="activity-card" *ngFor="let activity of recentActivities">
+          <div class="activity-icon" [ngClass]="activity.iconClass">
+            <ion-icon [name]="activity.icon"></ion-icon>
+          </div>
+          <div class="activity-text">
+            <h4>{{ activity.title }}</h4>
+            <p>{{ activity.subtitle }}</p>
+          </div>
+          <div class="activity-arrow">
+            <ion-icon name="caret-forward-outline"></ion-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="badges-section" *ngIf="!isLoading && myCourses.length > 0">
+      <h3 class="section-title">Lencana Pencapaian</h3>
+      <p class="section-subtitle">Selesaikan tantangan untuk membuka lencana</p>
+
+      <div class="badges-grid">
+        <div class="badge-card" *ngFor="let badge of badges" [ngClass]="{'unlocked': badge.unlocked}">
+          <div class="badge-icon-wrap" [style.background]="badge.bgColor">
+            <ion-icon [name]="badge.icon" [style.color]="badge.unlocked ? badge.color : '#c0c0c0'"></ion-icon>
+            <div class="badge-lock" *ngIf="!badge.unlocked">
+              <ion-icon name="lock-closed-outline"></ion-icon>
+            </div>
+          </div>
+          <h5 class="badge-title">{{ badge.title }}</h5>
+          <p class="badge-desc">{{ badge.description }}</p>
+          <div class="badge-progress-bar">
+            <div class="badge-fill" [style.width.%]="badge.progress" [style.background]="badge.color"></div>
+          </div>
+          <span class="badge-percent">{{ badge.progress }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="height: 30px;"></div>
+  </div>
+</ion-content>
